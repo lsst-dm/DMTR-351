@@ -1,0 +1,9 @@
+% bibentry template for lsst.bib in https://github.com/lsst/lsst-texmf/blob/main/texmf/bibtex/bib/lsst.bib
+
+@DocuShare{DMTR-351,
+   author = { Jeff Carlin },
+    title = {Characterization Metric Report: Science Pipelines Version 23.0},
+     year = 2021,
+    month = Dec,
+   handle = {DMTR-351},
+      url = {https://dmtr-351-351.lsst.io } }
