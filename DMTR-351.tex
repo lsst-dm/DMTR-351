@@ -50,11 +50,11 @@ The report for the previous version can be found in \citedsp{DMTR-311}.
 
 In this Report, we characterize the performance of the Rubin Observatory Science Pipelines Version 23.0.0. We illustrate the performance via metrics that are measured on the HSC-RC2 dataset. RC2 consists of 3 tracts of data taken from the HSC-SSP survey, and selected to provide a means of testing various ``pathological'' cases (e.g., difficult astrometric solutions, extremely good seeing that does not provide a well-sampled PSF, difficult fields for deblending, and large galaxies, among others). These three tracts each contain between 112--149 visits split between the HSC-G, HSC-R, HSC-I, HSC-Z, and HSC-Y (\emph{grizy}) filters. 
 
-This represents the first data release production pipeline that relies entirely on Gen3 middleware; the Gen2 middleware is now deprecated as of this release.
+This represents the first data release production pipeline that relies entirely on Gen3 middleware; Gen2 middleware is now deprecated as of this release.
 
-Beginning in March 2021, the metrics calculation package \texttt{validate\_drp} was deprecated and replaced with \texttt{faro}, a new package built to use the Gen3 butler, and that is part of the standard science pipeline builds. Henceforth \texttt{faro} will be the tool we use to measure data quality metrics for Rubin Observatory. Before adopting \texttt{faro}, detailed verification was performed to confirm that, given the same input datasets and configuration parameters, \texttt{faro} and \texttt{validate\_drp} produce identical results. Once this parity was demonstrated, \texttt{faro} was adopted and will now evolve (i.e., it will no longer be expected to produce identical results to those from \texttt{validate\_drp}). Nonetheless, many of the algorithms from \texttt{validate\_drp} were either ported directly to \texttt{faro} or have been modified slightly after porting. Our focus has now turned to implementing new metrics in \texttt{faro}.
+All metrics reported here were calculated using the \href{https://github.com/lsst/faro}{faro} metric calculation package, which is part of the standard pipeline builds. All of the underlying algorithms to calculate metrics within \texttt{faro} are the same as they were in v22.0.0 of the Science Pipelines, so most metrics should be expected to show similar results between v22 and v23 releases.
 
-The metric calculation pipelines from \texttt{faro} were run on the RC2 tracts to derive the photometric, astrometric, and shape metrics that are reported here. We exclude the two astrometry metrics (AM3 and AF3) that concern residuals on 200-arcminute scales, since neither the handful of CCDs in the validation\_data\_hsc dataset nor the individual tracts of RC2 span large enough spatial scales to enable these measurements. 
+The metric calculation pipelines from \texttt{faro} were run on the RC2 tracts to derive the photometric, astrometric, and shape metrics that are reported here. We exclude the two astrometry metrics (AM3 and AF3) that concern residuals on 200-arcminute scales, since the individual tracts of RC2 do not span large enough spatial scales to enable these measurements. 
 
 For comparison, we provide the \SRD required ``design'' value of each metric as defined in the Science Requirements Document \citedsp{LPM-17}.
 %, and, where available, the target for this release as defined in the Data Management Development Milestone Roadmap \citedsp{LDM-240}. 
@@ -64,34 +64,28 @@ Some KPMs (e.g., PF1, AF1, AF2) involve thresholds that are different for ``desi
 
 %The per-cycle target numbers come from the ``KPMs'' sheet of \href{http://ls.st/LDM-240}{LDM-240}.
 
-\section{Updated algorithms}\label{sec:new_algorithms}
+\section{Note about sky backgrounds}\label{sec:notes}
+In the v23.0.0 release of the Science Pipelines, the application of \texttt{skyCorr} (the global full focal plane background estimation) has been disabled for HSC data due to a bug in the pipelines that was being investigated at the time of the release (see \href{https://jira.lsstcorp.org/browse/DM-32827}{DM-32827} for details). This will be fixed before release v23.0.1. The absence of the \texttt{skyCorr} background corrections has a minor effect on coadd images, but all data products produced before the coaddition steps are unaffected. Of the metrics reported in this document, only the ellipticity correlations (Section~\ref{ellipticity-correlations}) TE1 and TE2 are measured on coadds.
 
-Since the previous (v21.0.0) Science Pipelines release, we have engaged in detailed review of the science quality metrics and algorithms to calculate them. In response to this review, we have updated some of the metric calculation algorithms to reflect our current understanding of their intent.
 
-The metric PA1 assesses the photometric repeatability. Its implementation in \texttt{validate\_drp} involved selecting pairs of visits for each object at random and calculating their magnitude difference. This was turned into a root mean square (RMS) about the (unknown) mean magnitude by dividing by $\sqrt2$, and then the interquartile range of these RMS magnitude differences was calculated. This process was repeated for 50 random shuffles, and the mean value of the interquartile range of RMS differences reported as the PA1 ``repeatability'' (in mmag). With larger datasets now available containing multiple visits in the same patch of sky, we have implemented a much simpler definition of photometric repeatability. Specifically, for all objects meeting the quality criteria for selection, the RMS of the magnitude measurements about the mean is calculated. The metric PA1 is simply the median value (in mmag) of this RMS value per tract. This conceptually simpler definition is more reflective of the SRD's intent, and will allow for extensions such as subtracting the expected contribution from statistical noise to isolate the systematic photometric repeatability floor. The magnitude differences used to calculate PA1 are also used to measure PF1, the percentage of measurements that deviate by more than some threshold (in mmag) from the mean.
+\section{Metric monitoring dashboard}\label{sec:dashboard}
 
-The metrics assessing ellipticity residuals (TE1 and TE2) have also been updated in response to our recent review. The previous implementation measured TE1 and TE2 from matched catalogs (i.e., sources matched between multiple visits), while the SRD definition specifies quantities that should be measured from objects in coadded images. We have rewritten the algorithm to calculate ellipticity residuals from coadd Objects rather than matched catalogs of sources. Another change we made was to calculate the average of the \textit{absolute value} of the correlation function instead of the straight average of the correlation function -- because the correlation function value can be negative, taking a mean value artificially skews the value toward zero, rather than reflecting the magnitude of the effect. Additional investigation of the proper set of sources to select for measuring ellipticity residuals is ongoing (e.g., Jira ticket DM-30256), as the current selection is likely including sources whose PSF flux has been altered by the deblending process. Thus the values of metrics TE1 and TE2 in the tables below are not fully reflective of the capabilities of the science pipelines.
+\begin{figure}[!t]
+\includegraphics[width=1.0\columnwidth]{figures/verify_drp_metrics_dashboard_17dec2021.png}
+A portion of the ``DRP metrics nightly CI Gen3 (rc2\_subset)'' dashboard on SQuaSH. This was recently created for daily tracking of metrics calculated on the \texttt{rc2\_subset} dataset via the nightly \texttt{verify\_drp\_metrics} CI job. The view shown here tracks metrics calculated each day for the past week. Although no changes in the science pipelines over the week displayed should contribute to changes in data quality, there are small fluctuations seen in many metrics. This is under investigation, but is likely due to small changes in data products brought about by non-deterministic behavior in some calibration algorithms.
+\end{figure}
 
-An additional metric reported here that has not been included in previous versions of this Report is AB1 -- the residuals from comparison of a source's measured position in any band other than $r$, as compared the the same source's position in $r$-band. The RMS of these offsets in milliarcseconds is AB1.
+Since the previous Science Pipelines release, we have created a new dataset called \texttt{rc2\_subset}, which is a small selection of data from the RC2 dataset that includes only the 6 central detectors from 8 randomly chosen visits in each of the 5 filters \textit{grizy}. This dataset was created with the goal of covering a large enough area (i.e., included an ample number of sources) for data quality monitoring in all five available HSC filters, but that is a small enough dataset that it can be reprocessed in its entirety in a nightly continuous integration (CI) job. This job has been dubbed \texttt{verify\_drp\_metrics}, and is automatically executed in Jenkins CI nightly. Data quality metrics calculated by \texttt{faro} are dispatched to SQuaSH (Science Quality System Harness; described in \citedsp{sqr-009}) and a dashboard displaying time-series plots of the metrics is updated daily to enable monitoring of data quality.
 
-Finally, we note the removal of some metrics that have been reported with previous Science Pipelines releases. Specifically, we no longer report PA2, AD1, and AD2, which are named quantities in the SRD that correspond to thresholds used in calculating related metrics (e.g., PA2 defines the threshold for outliers in measuring PF1), and not meant to define metrics themselves.
 
 \section{Summary of performance metrics}
 
-Other than the changes in how metrics are calculated (i.e., new algorithms and the adoption of the Gen3 Butler-native package \texttt{faro} for metric calculation), none of the major changes since Pipelines Version 21.0.0 should have dramatic effects on the performance metrics presented here. One of the biggest changes implemented in Version 22.0.0 is the adoption of the \texttt{scarlet} deblender for coadd measurement. While this will affect measurements of deblended objects from coadd images, none of the metrics in this report use measurements of deblended objects. The ellipticity residuals (Section~\ref{ellipticity-correlations}) are measured on coadds, but specifically select isolated sources whose measurements were not altered by deblending. All other metrics are calculated based on single-visit data.
-
-%Metrics are typically monitored on a dashboard hosted by SQuaSH (Science Quality System Harness; described in \citedsp{sqr-009}). Here we show an example of this dashboard displaying $\sim6$ months of measurements for a few metrics. These measurements are for tract 9813, as measured in the \emph{r}-band filter (HSC-R). The astrometry (two upper panels) and ellipticity (lower right plot) metrics have remained roughly the same since the Version 20.0.0 release in late June, 2020. Likewise, all of the astrometry metrics summarized in Section~\ref{astrometric-performance} are similar to, or slightly better than, the Version 20.0.0 values. Note, however, that there is a large increase in the photometric repeatability metric in late June -- this can also be seen in the photometric KPMs summarized in Section~\ref{photometric-performance}. This happened because shortly after the release of version 20.0, we began using FGCM \citep{2018AJ....155...41B} for photometric calibration instead of jointcal. In general, FGCM is optimized for survey self-calibration with multiple exposures overlapping in space and time, and is not optimized for individual isolated tracts as in the RC2 dataset. Thus, while FGCM is likely to enable much better overall survey calibration, at RC2 scales it may offer little improvement compared to jointcal. Nonetheless, we expect the photometry metrics to continue to improve as we understand the effects of implementing FGCM in the Science Pipelines.
-
-%\begin{figure}
-%\includegraphics[width=1.0\columnwidth]{figures/SQuaSH_dashboard_RC2_tract9813.png}
-%\caption{SQuaSH dashboard showing the past four months of metric measurements from the RC2 dataset. This view shows the metrics for tract 9813 in the HSC-R filter. The degraded performance in the photometry metrics after late June was due to the introduction of a new photometric calibration method known as FGCM, replacing jointcal. The metrics have continued to improve since the introduction of FGCM (but are still slightly worse than previous results using jointcal), as our understanding of FGCM's effects on the pipeline outputs evolves.}
-%\end{figure}
+Because there have been no major changes in the data processing algorithms in the Science Pipelines between versions 22.0.0 and 23.0.0, the data quality metrics should be similar. Indeed, the astrometry metrics (Section~\ref{astrometric-performance}) are nearly identical between the previous (v22) and current (v23) Science Pipelines releases. The photometry metrics (Section~\ref{photometric-performance}) and ellipticity correlation metrics (Section~\ref{ellipticity-correlations}) show small differences between Release 22 and 23, most of which represent minor improvements in the metric values. A likely explanation for these minor improvements is the work done on ticket \href{https://jira.lsstcorp.org/browse/DM-31505}{DM-31505}, which updated the \texttt{FGCM} photometric calibration algorithms to better handle fields of view near the spatial edges of survey footprints. This likely affects RC2 data, because they consist of three distinct, isolated tracts, and thus have a relatively large fraction of ``edge'' data. It is obvious that improvements to the photometric \textit{calibration} will improve the measured photometry; the effects on ellipticity correlations likely arise due to the slightly different photometric calibrations altering the weights that are applied to individual frames during coaddition.
 
 
 \section{Photometric Performance}\label{photometric-performance}
 
-These photometric performance
-metrics are defined in LSS-REQ-0093 (\citeds{LSE-29}) and Table 14 of \citeds{LPM-17}. Values are presented for both the legacy \texttt{validate\_drp} calculations (for comparison to Version 21), and for the updated algorithms implemented in \texttt{faro}. The \texttt{validate\_drp} algorithms will be deprecated after this release. \textit{Note that the change in values between the \texttt{validate\_drp} and \texttt{faro} metrics is due to adoption of a new algorithm for calculating the metrics, as outlined in Section~\ref{sec:new_algorithms}.}
+These photometric performance metrics are defined in LSS-REQ-0093 (\citeds{LSE-29}) and Table 14 of \citeds{LPM-17}. Values in this table represent the mean of the results reported by \texttt{faro} for the three tracts in RC2.
 
 Any entries left blank are those for which we do not have data in the given filter for that dataset.
 
@@ -289,7 +283,9 @@ PF1: \emph{y}\strut
 \section{Astrometric Performance}\label{astrometric-performance}
 
 The following metrics are defined following LSR-REQ-0094
-\citedsp{LSE-29} and Table 18 of \citeds{LPM-17}.
+\citedsp{LSE-29} and Table 18 of \citeds{LPM-17}. Values in this table represent the mean of the results reported by \texttt{faro} for the three tracts in RC2.
+
+Any entries left blank are those for which we do not have data in the given filter for that dataset.
 
 \begin{longtable}[]{@{}llllll@{}}
 \toprule
@@ -863,7 +859,9 @@ mas\strut
 \section{Ellipticity Correlations}\label{ellipticity-correlations}
 
 The following metrics are defined following LSR-REQ-0097
-\citedsp{LSE-29} and Table 27 of \citeds{LPM-17}. \textit{Note that, as detailed in Section~\ref{sec:new_algorithms}, we adopted new algorithms for calculating these metrics between pipelines releases 21 and 22.}
+\citedsp{LSE-29} and Table 27 of \citeds{LPM-17}. Values in this table represent the mean of the results reported by \texttt{faro} for the three tracts in RC2.
+
+Any entries left blank are those for which we do not have data in the given filter for that dataset.
 
 \begin{longtable}[]{@{}llllll@{}}
 \toprule
