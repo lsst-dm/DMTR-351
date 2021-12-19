@@ -50,7 +50,7 @@ The report for the previous version can be found in \citedsp{DMTR-311}.
 
 In this Report, we characterize the performance of the Rubin Observatory Science Pipelines Version 23.0.0. We illustrate the performance via metrics that are measured on the HSC-RC2 dataset. RC2 consists of 3 tracts of data taken from the HSC-SSP survey, and selected to provide a means of testing various ``pathological'' cases (e.g., difficult astrometric solutions, extremely good seeing that does not provide a well-sampled PSF, difficult fields for deblending, and large galaxies, among others). These three tracts each contain between 112--149 visits split between the HSC-G, HSC-R, HSC-I, HSC-Z, and HSC-Y (\emph{grizy}) filters. 
 
-This represents the first data release production pipeline that relies entirely on Gen3 middleware; Gen2 middleware is now deprecated as of this release.
+Version 23.0.0 represents the first data release production pipeline that relies entirely on Gen3 middleware; Gen2 middleware is now deprecated as of this release.
 
 All metrics reported here were calculated using the \href{https://github.com/lsst/faro}{faro} metric calculation package, which is part of the standard pipeline builds. All of the underlying algorithms to calculate metrics within \texttt{faro} are the same as they were in v22.0.0 of the Science Pipelines, so most metrics should be expected to show similar results between v22 and v23 releases.
 
@@ -58,7 +58,7 @@ The metric calculation pipelines from \texttt{faro} were run on the RC2 tracts t
 
 For comparison, we provide the \SRD required ``design'' value of each metric as defined in the Science Requirements Document \citedsp{LPM-17}.
 %, and, where available, the target for this release as defined in the Data Management Development Milestone Roadmap \citedsp{LDM-240}. 
-For context, the \SRD does not place any constraints on \emph{y}-band for these Key Performance Metrics (KPMs).  For the photometric metrics, there are only specifications for \emph{g}, \emph{r}, and \emph{i}'. In the case of the ellipticity correlation metrics, there are specs only for \emph{r} and \emph{i}'. The \emph{y}-band measurements are of interest primarily for historical tracking.
+For context, the \SRD does not place any constraints on \emph{y}-band for these Key Performance Metrics (KPMs).  For the photometric metrics, there are only specifications for \emph{g}, \emph{r}, and \emph{i}. In the case of the ellipticity correlation metrics, there are specs only for \emph{r} and \emph{i}. The \emph{y}-band measurements are of interest primarily for historical tracking.
 
 Some KPMs (e.g., PF1, AF1, AF2) involve thresholds that are different for ``design'', ``minimum'', and ``stretch'' specifications. Metrics in this report are all compared to the ``design'' thresholds. The assessment of these KPMs would be different if evaluated against different thresholds.
 
@@ -73,9 +73,9 @@ In the v23.0.0 release of the Science Pipelines, the application of \texttt{skyC
 \begin{figure}[!t]
 \includegraphics[width=1.0\columnwidth]{figures/verify_drp_metrics_dashboard_17dec2021.png}
 A portion of the ``DRP metrics nightly CI Gen3 (rc2\_subset)'' dashboard on SQuaSH. This was recently created for daily tracking of metrics calculated on the \texttt{rc2\_subset} dataset via the nightly \texttt{verify\_drp\_metrics} CI job. The view shown here tracks metrics calculated each day for the past week. Although no changes in the science pipelines over the week displayed should contribute to changes in data quality, there are small fluctuations seen in many metrics. This is under investigation, but is likely due to small changes in data products brought about by non-deterministic behavior in some calibration algorithms.
-\end{figure}
+\end{figure}\label{fig:dashboard}
 
-Since the previous Science Pipelines release, we have created a new dataset called \texttt{rc2\_subset}, which is a small selection of data from the RC2 dataset that includes only the 6 central detectors from 8 randomly chosen visits in each of the 5 filters \textit{grizy}. This dataset was created with the goal of covering a large enough area (i.e., included an ample number of sources) for data quality monitoring in all five available HSC filters, but that is a small enough dataset that it can be reprocessed in its entirety in a nightly continuous integration (CI) job. This job has been dubbed \texttt{verify\_drp\_metrics}, and is automatically executed in Jenkins CI nightly. Data quality metrics calculated by \texttt{faro} are dispatched to SQuaSH (Science Quality System Harness; described in \citedsp{sqr-009}) and a dashboard displaying time-series plots of the metrics is updated daily to enable monitoring of data quality.
+Since the previous Science Pipelines release, we have created a new dataset called \texttt{rc2\_subset}, which is a small selection of data from the RC2 dataset that includes only the 6 central detectors from 8 randomly chosen visits in each of the 5 filters \textit{grizy}. This dataset was created with the goal of covering a large enough area and including an ample number of sources for data quality monitoring in all five available HSC filters, but that is a small enough dataset that it can be reprocessed in its entirety in a nightly continuous integration (CI) job. This job has been dubbed \texttt{verify\_drp\_metrics}, and is automatically executed in Jenkins CI nightly. Data quality metrics calculated by \texttt{faro} are dispatched to SQuaSH (Science Quality System Harness; described in \citedsp{sqr-009}) and a dashboard displaying time-series plots of the metrics is updated daily to enable monitoring of data quality. Figure~\ref{fig:dashboard} shows a snapshot of the SQuaSH dashboard.
 
 
 \section{Summary of performance metrics}
